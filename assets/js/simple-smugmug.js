@@ -6,27 +6,24 @@
 */
 
 jQuery(function ($) {
-  //options and gallery_x come from wordpress wp_localize_script()
 
-  //object where we'll store properties later
-  var smug = {};
-
+  // simple_smugmug_options  and gallery_[x] are global variables from the wordpress plugin's wp_localize_script()
   var albumHtml = '';
   var imageHtml = '';
 
-  //cache variables
+  // cache variables
   var cached = localStorage.getItem('smugCacheAlbums')
   var whenCached = localStorage.getItem('smugCache:ts')
-  var expiry = options.cache_expiry;
-  //options
-  var smugmugurl = "https://www.smugmug.com";
-  var api_key = options.api_key;
-  var smugmug_username = options.smugmug_username;
-  var force_https = options.force_https;
+  var expiry = simple_smugmug_options.cache_expiry;
 
-  //blastoff
+  // options
+  var smugmugurl = "https://www.smugmug.com";
+  var api_key = simple_smugmug_options.api_key;
+  var smugmug_username = simple_smugmug_options.smugmug_username;
+  var force_https = simple_smugmug_options.force_https;
+
   var galleries = [];
-  //this is dumb
+  // this is a dumb way to allow multiple (up to 10) shorcodes to be used on the same page
     if (typeof gallery_0 !== 'undefined'){
       galleries.push(gallery_0);
     }
@@ -59,54 +56,53 @@ jQuery(function ($) {
     }
 
   console.log(galleries);
-  if ( galleries.length && galleries[0].gallery_id.length ) {
+  if ( galleries.length ) {
     $.each(galleries, function (i, gallery){
       retrieveSmug(gallery, i);
     })
-  } else {
-    retrieveSmug(false, 0);
   }
 
 
-
-  //the main function
+  // the main function
   function retrieveSmug(gallery, i){
-    //set options based on shortcode or fall back to current settings
-    if (gallery === false) {
-      gallery = {};
-    }
 
+    // set options based on shortcode or fall back to current settings
     gallery.gallery_id = gallery.gallery_id || '';
-    gallery.display_in_lightgallery = gallery.display_in_lightgallery || options.display_in_lightgallery;
-    gallery.show_gallery_buy_link = gallery.show_gallery_buy_link || options.show_gallery_buy_link;
-    gallery.album_container_class = gallery.album_container_class || options.album_container_class;
-    gallery.first_image_container_class = gallery.first_image_container_class || options.first_image_container_class;
-    gallery.image_container_class = gallery.image_container_class || options.image_container_class;
-    gallery.image_class = gallery.image_class || options.image_class;
-    gallery.title_class = gallery.title_class || options.title_class;
-    gallery.link_class = gallery.link_class || options.link_class;
-    gallery.image_count = gallery.image_count || options.image_count;
-    gallery.album_count = options.album_count;
-    gallery.show_album_title = gallery.show_album_title || options.show_album_title;
-    gallery.smug_link_icon = gallery.smug_link_icon || options.smug_link_icon;
+    gallery.display_in_lightgallery = gallery.display_in_lightgallery || simple_smugmug_options.display_in_lightgallery;
+    gallery.show_gallery_buy_link = gallery.show_gallery_buy_link || simple_smugmug_options.show_gallery_buy_link;
+    gallery.album_container_class = gallery.album_container_class || simple_smugmug_options.album_container_class;
+    gallery.first_image_container_class = gallery.first_image_container_class || simple_smugmug_options.first_image_container_class;
+    gallery.image_container_class = gallery.image_container_class || simple_smugmug_options.image_container_class;
+    gallery.image_class = gallery.image_class || simple_smugmug_options.image_class;
+    gallery.title_class = gallery.title_class || simple_smugmug_options.title_class;
+    gallery.link_class = gallery.link_class || simple_smugmug_options.link_class;
+    gallery.image_count = gallery.image_count || simple_smugmug_options.image_count;
+    gallery.album_count = simple_smugmug_options.album_count;
+    gallery.show_album_title = gallery.show_album_title || simple_smugmug_options.show_album_title;
+    gallery.smug_link_icon = gallery.smug_link_icon || simple_smugmug_options.smug_link_icon;
 
+    // notify and return when required stuff is not set
     if ( $.type(smugmug_username) === 'undefined' || smugmug_username === 'your smugmug username' || !smugmug_username.length ) {
-      renderError('Please set your smugmug username in WP admin > Settings > Simple Smugmug')
+      renderError('Please set your smugmug username in WP admin > Settings > Simple Smugmug', gallery.el)
       return;
     }
     
     if ( $.type(api_key) === 'undefined' || api_key === 'your api key' || !api_key.length) {
-      renderError('Please set your smugmug API key in WP admin > Settings > Simple Smugmug');
+      renderError('Please set your smugmug API key in WP admin > Settings > Simple Smugmug', gallery.el);
       return;
     }
-    var el = $('#smug-shortcode-'+i);
 
+    // the current shortcode's container
+
+    // load 'er up
     $(".smug-inner").addClass("loading-smug");
 
-    //if there's a gallery key passed to the shortcode fetch it.
-    //it's less likely the user is revisiting a gallery so disregard cacheing.
+    // if there's a gallery key passed to the shortcode fetch it.
+    // it's less likely the user is revisiting a gallery so disregard caching.
+    // I've sort of disregarded the caching after I extended the plugin to show single galleries etc.
     if (gallery.gallery_id.length > 0) {
-      retrieveAlbum(el, gallery);
+      console.log('retrieving gallery', gallery.gallery_id);
+      retrieveAlbum(gallery);
       return;
     }
 
@@ -117,23 +113,23 @@ jQuery(function ($) {
       // it's cached
       var age = (Date.now() - whenCached) / 1000
       if (age < expiry) {
-        retrieveAlbumsFromCache(el, gallery);
+        retrieveAlbumsFromCache(gallery);
       } else {
         // We need to clean up this expired key
         console.log('cache expired');
         invalidateCache();
         //don't forget to get all the new stuff!
-      retrieveAlbums(el, gallery);
+        retrieveAlbums(gallery);
       }
     } else {
       console.log('not yet cached - retrieving albums');
-      retrieveAlbums(el, gallery);
+      retrieveAlbums(gallery);
     }
   }
 
   function invalidateCache() {
     if (cached){
-      for (var i = options.album_count - 1; i >= 0; i--) {
+      for (var i = simple_smugmug_options.album_count - 1; i >= 0; i--) {
         var key = JSON.parse(localStorage.getItem('smugCacheAlbums'))[i].AlbumKey;
         localStorage.removeItem('smugCacheImages-'+key);
       }  
@@ -142,12 +138,13 @@ jQuery(function ($) {
     localStorage.getItem('smugCache:ts') && localStorage.removeItem('smugCache:ts');
   };
 
+  // final destination
   function setHtml(images, gallery) {
     console.log(images, gallery);
     var html = '';
        $.each( images, function(i, image) {
           if (i < gallery.image_count) {
-              html += '<a href="'+( gallery.display_in_lightgallery === '1' && gallery.gallery_id ? (image.LargeImageUrl || image.MediumImageUrl) : secureUrl(image.WebUri))+'"'+
+              html += '<a href="'+( gallery.display_in_lightgallery === '1' && gallery.gallery_id ? (image.LargeImageUrl || image.MediumImageUrl) : secureUrl(image.WebUri) )+'"'+
               'data-sub-html="'+image.Caption+'"'+
               'data-smug-url="'+secureUrl(image.WebUri)+'"'+
               'target="_blank"'+
@@ -156,14 +153,14 @@ jQuery(function ($) {
               '<img src="'+image.ThumbnailUrl+'"class="'+gallery.image_class+'"/></a>';
           }
       });
-      $(".smug-inner").removeClass('loading-smug');
-      $(".smug-inner #simple-smugmug-loader").remove();
 
-      return html;
+    removeLoader(gallery.el);
+
+    return html;
 
   }
 
-  function retrieveAlbumsFromCache(el, gallery){
+  function retrieveAlbumsFromCache(gallery){
     if (localStorage.getItem('smugCacheAlbums')){
       var albums = JSON.parse(localStorage.getItem('smugCacheAlbums'));
       if (albums.length && albums[0] && albums[0].WebUri) {
@@ -171,33 +168,35 @@ jQuery(function ($) {
             console.log(i, album.WebUri, album.Name);
             if (i < gallery.album_count) {
               var album_title_html = (gallery.show_album_title === '1') ? '<a class"'+gallery.link_class+'" href="'+secureUrl(album.WebUri)+'"><h4 class="'+gallery.title_class+'">'+album.Name+'</h4></a>' : '';
-              albumHtml += '<div class="'+gallery.album_container_class+'">'+album_title_html;
+              var albumHtml  = '<div class="'+gallery.album_container_class+'">'+album_title_html;
               albumHtml += retrieveImagesFromCache(album.AlbumKey, gallery);
               albumHtml += '</div>';
+              console.log('append to ',  gallery.el);
+              $('#'+gallery.el).append(albumHtml);
 
           } else {
             return;
           }
         });
-        el.append(albumHtml);
       }
     } else {
       //something is wrong with the cached data
-      retrieveAlbums(el, gallery);
+      retrieveAlbums(gallery);
     }
   }
 
   function retrieveImagesFromCache(AlbumKey, gallery){
     var images = JSON.parse(localStorage.getItem('smugCacheImages-'+AlbumKey))
     if ( images ) {
+      console.log('setting from cahced ', gallery);
       return setHtml(images, gallery);
     } else {
       invalidateCache();
-      renderError('Sorry, something went wrong. Please reload the page and try again.')
+      renderError('Sorry, something went wrong. Please reload the page and try again.', gallery.el)
     }
   };
 
-  function retrieveAlbums(el, gallery){
+  function retrieveAlbums(gallery){
 
     retrieveApi('/api/v2/user/'+smugmug_username+'!albums').success(function (data) {
       if (data.Code === 200) {
@@ -209,10 +208,10 @@ jQuery(function ($) {
 
                 //set up html
                 var album_title_html = (gallery.show_album_title === '1') ? '<a class"'+gallery.link_class+'" href="'+secureUrl(album.WebUri)+'"><h4 class="'+gallery.title_class+'">'+album.Name+'</h4></a>' : '';
-                albumHtml  = '<div class="'+gallery.album_container_class+'">'+album_title_html;
+               var albumHtml  = '<div class="'+gallery.album_container_class+'">'+album_title_html;
                 albumHtml += data;
                 albumHtml += '</div>';
-                $(el).append(albumHtml);
+                $('#'+gallery.el).append(albumHtml);
 
                 // add the albums to the cache
                 var arr = JSON.parse(localStorage.getItem('smugCacheAlbums')) || [];
@@ -226,18 +225,25 @@ jQuery(function ($) {
 
               }).catch(function (err){
                 console.log(err);
-                renderError(err.Message);
+                renderError(err.Message, gallery.el);
               });
         } else {
           return;
         }
       });
       } else {
-        renderError('Error getting Smugmug data')
+        renderError('Error getting Smugmug data', gallery.el);
+        removeLoader(gallery.el);
+
       }
-    }).error(function (err){
+    })
+    .error(function (err){
       console.log(err);
-      renderError(err.Message);
+      removeLoader(gallery.el);
+      renderError(JSON.parse(err.responseText).Code + ': '+JSON.parse(err.responseText).Message, gallery.el);
+      if (JSON.parse(err.responseText).Code === 404) {
+        renderError('The gallery was removed or the ID is incorrect.', gallery.el)
+      }
     });
     
   }
@@ -253,20 +259,25 @@ jQuery(function ($) {
         .then(function (data){
           console.log(data);
 
-          //cacheing 
+          //caching 
           if ( !gallery.gallery_id.length > 0 ) {
             localStorage.setItem('smugCacheImages-'+key, JSON.stringify(data));
           }
           resolve(setHtml(data, gallery))
         })
       } else {
-        renderError('Error getting Smugmug data');
+        renderError('Error getting Smugmug data', gallery.el);
         reject();
       }
-      }).error(function (err) {
-        console.log(err)
-        reject();
       })
+      .error(function (err){
+      console.log(err);
+      removeLoader(gallery.el);
+      renderError(JSON.parse(err.responseText).Code + ': '+JSON.parse(err.responseText).Message, gallery.el);
+      if (JSON.parse(err.responseText).Code === 404) {
+        renderError('The gallery was removed or the ID is incorrect.', gallery.el)
+      }
+    });
     })
   }
 
@@ -293,9 +304,14 @@ jQuery(function ($) {
           reject();
           }
 
-          }).error(function (err) {
+          })
+          .error(function (err){
             console.log(err);
-            reject();
+            removeLoader(gallery.el);
+            renderError(JSON.parse(err.responseText).Code + ': '+JSON.parse(err.responseText).Message, gallery.el);
+            if (JSON.parse(err.responseText).Code === 404) {
+              renderError('The gallery was removed or the ID is incorrect.', gallery.el)
+            }
           })
         )
       }
@@ -309,8 +325,7 @@ jQuery(function ($) {
     });
   }
 
-  function retrieveAlbum(el, gallery) {
-
+  function retrieveAlbum(gallery) {
     retrieveApi('/api/v2/album/'+gallery.gallery_id).success(function (data) {
       console.log(data);
     if (data.Code === 200) {
@@ -318,13 +333,16 @@ jQuery(function ($) {
       retrieveImages(album.Uris.AlbumImages.Uri, album.AlbumKey, gallery)
         .then(function (data){ 
           var album_title_html = (gallery.show_album_title === '1') ? '<a class"'+gallery.link_class+'" href="'+secureUrl(album.WebUri)+'"><h4 class="'+gallery.title_class+'">'+album.Name+'</h4></a>' : '';
-          albumHtml = '<div class="'+gallery.album_container_class+' '+(gallery.display_in_lightgallery === '1' ? 'lg-smug' : '')+'">'+album_title_html;
+          var albumHtml = '<div class="'+gallery.album_container_class+' '+(gallery.display_in_lightgallery === '1' ? 'lg-smug' : '')+'">'+album_title_html;
           albumHtml += data;
           albumHtml += '</div>';
           console.log('albumhtml: ', albumHtml);
-          el.html(albumHtml);
 
-          $('.lg-smug').lightGallery({
+          $('#'+gallery.el).html(albumHtml);
+
+         if ( gallery.display_in_lightgallery === '1' ) {
+
+            $('.lg-smug').lightGallery({
               download:false,
               smugLink:  gallery.show_gallery_buy_link === '1' ? true : false,
               smugLinkIcon: gallery.smug_link_icon ? gallery.smug_link_icon : 'lg-cart lg-icon',
@@ -334,22 +352,33 @@ jQuery(function ($) {
               subHtmlSelectorRelative: true,
               hideBarsDelay: 2000
             });
+          }
 
         }).catch(function (err){
           console.log(err);
-          renderError(err.Message);
+          renderError(err.Message, gallery.el);
         });
       } else {
-        renderError('Error getting Smugmug data')
+        renderError('Error getting Smugmug data', gallery.el)
       }
-    }).error(function (err){
+    })
+    .error(function (err){
       console.log(err);
-      renderError(JSON.parse(err.responseText).Code + ': '+JSON.parse(err.responseText).Message);
+      removeLoader(gallery.el);
+      renderError(JSON.parse(err.responseText).Code + ': '+JSON.parse(err.responseText).Message, gallery.el);
+      if (JSON.parse(err.responseText).Code === 404) {
+        renderError('The gallery was removed or the ID is incorrect.', gallery.el)
+      }
     });
 
   }
 
-  //simple ajax function that we can pass a url to because we do recursive api requests ( album -> that album's images )
+  function removeLoader(el) {
+    $("#"+el).removeClass('loading-smug');
+    $("#"+el+" #simple-smugmug-loader").remove();
+  }
+
+  // simple ajax function that we can pass a url to because we do recursive api requests ( album -> that album's images )
   function retrieveApi(uri){
 
     var req = smugmugurl + uri + '?APIKey=' + api_key;
@@ -359,9 +388,6 @@ jQuery(function ($) {
         method: "GET",
         cache: true,
         dataType: "json",
-        // error: function(xhr, status, error) {
-        //   renderError(JSON.parse(xhr.responseText).Message);
-        // }
        })
   }
 
@@ -375,10 +401,10 @@ jQuery(function ($) {
     }
   }
 
-  //rendering error messages in the container
-  function renderError(message) {
-    albumHtml +='<div><p>'+message+'</p></div>';
-    $(".smug-inner").append(albumHtml);
+  // rendering error messages in the container
+  function renderError(message, el) {
+    var error = '<div class="simple-smug-error"><p>'+message+'</p></div>';
+    $('#'+el).append(error);
   }
 
 });
