@@ -188,7 +188,7 @@ class simple_smugmug_admin {
 
 		add_settings_field( 
 			'image_count', 
-			__( 'Number of images per album to show', 'wordpress' ), 
+			__( 'Number of images per album to show (max 100)', 'wordpress' ), 
 			array($this, 'smug_text_image_count_render'), 
 			'pluginPage', 
 			'smug_pluginPage_section' 
@@ -486,6 +486,7 @@ class simple_smugmug_admin {
 		<p><strong>2)</strong> Display a single gallery in a post by passing its album key into the shortcode:</p>
 		<p><code>[simple_smugmug gallery_id="Pz5sF8"]</code></p>
 		<p>The album key can be found by inspecting the element of the gallery on the page that lists the galleries, and looking for the attribute <code>data-clientid</code>. It will be in this format: <code>/api/v2/album/xxxxxx</code>. The album key is the xxxxxx part. (An easier way is if you're logged in, press the replace image button then look for AlbumKey in the url).</p>
+		<p>This is done automatically if you use the Add Smugmug Gallery button on the WP visual editor.</p>
 	<ul>
 		<li>Lightgallery only works on single posts that display a single gallery (i.e using <code>gallery_id</code>)</li>
 		<li>The 'feed' version (i.e shortcode used without a gallery_id) will be cached in localstorage. The idea is that if you have it in a sidebar, as someone navigates your site, they won't have to do the api requests on every page. You can set the cache time to 0 if you don't want this behaviour.</li>

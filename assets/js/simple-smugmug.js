@@ -343,12 +343,12 @@ jQuery(function ($) {
          if ( gallery.display_in_lightgallery === '1' ) {
 
             $('.lg-smug').lightGallery({
-              download:false,
-              smugLink:  gallery.show_gallery_buy_link === '1' ? true : false,
+              download: false,
+              smugLink: gallery.show_gallery_buy_link === '1' ? true : false,
               smugLinkIcon: gallery.smug_link_icon ? gallery.smug_link_icon : 'lg-cart lg-icon',
-              thumbnail:true,
-              selector:'.lg-smug-item',
-              showAfterLoad:true,
+              thumbnail: true,
+              selector: '.lg-smug-item',
+              showAfterLoad: true,
               subHtmlSelectorRelative: true,
               hideBarsDelay: 2000
             });
