@@ -14,8 +14,8 @@ Uses the awesome jQuery gallery plugin [lightGallery](https://github.com/sachinc
 
 ## screenshots
 
-![editor add gallery](https://github.com/renrizzolo/wp-simgple-smugmug/blob/master/screenshots/simple-smugmug-editor.png
-![settings](https://github.com/renrizzolo/wp-simgple-smugmug/blob/master/screenshots/simple-smugmug-settings.png)
+![editor add gallery](https://github.com/renrizzolo/wp-simple-smugmug/master/screenshots/simple-smugmug-editor.png)  
+![settings](https://github.com/renrizzolo/wp-simple-smugmug/blob/master/screenshots/simple-smugmug-settings.png)  
 
 ## Usage:
 
