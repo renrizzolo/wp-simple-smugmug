@@ -9,7 +9,7 @@ Nothing is saved to your server.
 If you remove a gallery from smugmug in the future, it will no longer show on your wordpress site.  
 Your API key will be exposed to the browser. Use at your own risk.
 
-**credits**
+**credits**  
 Uses the awesome jQuery gallery plugin [lightGallery](https://github.com/sachinchoolur/lightGallery)
 
 ## screenshots
