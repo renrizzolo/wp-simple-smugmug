@@ -55,12 +55,6 @@ jQuery(function($) {
             method: "GET",
             cache: true,
             dataType: "json",
-            // success: function(data) {
-            //     var latestAlbums = data;
-            // },
-            // error: function(xhr, status, error) {
-            //   renderError(JSON.parse(xhr.responseText).Message);
-            // }
         })
     }
 
@@ -99,14 +93,12 @@ jQuery(function($) {
     }
 
     function getVal(el){
-        console.log('val ', $("*[name='simple_smugmug["+el+"]']").val());
         var val = $("*[name='simple_smugmug["+el+"]']").val();
         return val ? val.toString() : '';
 
     }
 
     function getData(el){
-        console.log('data-current', $("*[name='simple_smugmug["+el+"]']").data('current') );
         var data = $("*[name='simple_smugmug["+el+"]']").data('current');
         return data ? data.toString() : '';
 

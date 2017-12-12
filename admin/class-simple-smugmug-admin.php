@@ -483,14 +483,13 @@ class simple_smugmug_admin {
 		<h3>Usage:</h3> 
 		<h4>There are 2 ways to use this plugin:</h4>
 		<p><strong>1)</strong> Use shortcode <code>[simple_smugmug]</code> to display the <code>[album_count]</code> most recent albums with the below settings. This is intended to be used as a widget in e.g a sidebar.</p>
-		<p><strong>2)</strong> Display a single gallery in a post by passing its album key into the shortcode:</p>
-		<p><code>[simple_smugmug gallery_id="Pz5sF8"]</code></p>
-		<p>The album key can be found by inspecting the element of the gallery on the page that lists the galleries, and looking for the attribute <code>data-clientid</code>. It will be in this format: <code>/api/v2/album/xxxxxx</code>. The album key is the xxxxxx part. (An easier way is if you're logged in, press the replace image button then look for AlbumKey in the url).</p>
-		<p>This is done automatically if you use the Add Smugmug Gallery button on the WP visual editor.</p>
+		<p><strong>2)</strong> Display (up to 10) single galleries in a post by passing its album key into the shortcode:</p>
+		<p>Automatically: create a post and press the Add Smugmug Gallery button (It should be next to Add Media). This will Fetch the last 50 galleries. Select the gallery from the dropdown.</p>
+		<p>Manually: The album key can be found by inspecting the element of the gallery on the page that lists the galleries, and looking for the attribute <code>data-clientid</code>. It will be in this format: <code>/api/v2/album/xxxxxx</code>. The album key is the xxxxxx part. (An easier way is if you're logged in, press the replace image button then look for AlbumKey in the url).</p>
 	<ul>
-		<li>Lightgallery only works on single posts that display a single gallery (i.e using <code>gallery_id</code>)</li>
-		<li>The 'feed' version (i.e shortcode used without a gallery_id) will be cached in localstorage. The idea is that if you have it in a sidebar, as someone navigates your site, they won't have to do the api requests on every page. You can set the cache time to 0 if you don't want this behaviour.</li>
-		<li>You can add multiple shortcodes to a post, but you can't combine the feed version and specific galleries.</li>
+		<li>The 'feed' version (i.e shortcode used without a gallery_id) will be cached in localstorage (album uris, captions, titles, image urls etc). The idea is that if you have it in a sidebar, as someone navigates your site, they won't have to do the api requests on every page. You can set the cache time to 0 if you don't want this behaviour.  </li>
+		<li>You can add multiple shortcodes to a post.</li>
+		<li>No more than 100 images will be displayed per gallery. This is the pagination limit of the Smugmug API. </li>
 		<li>The loading spinner can be overridden with html passed to the <code>'simple_smugmug_loader'</code> hook.
 			<br/>
 			<pre><code style="display:block;">

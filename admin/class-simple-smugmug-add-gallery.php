@@ -3,17 +3,17 @@
  * Add a button to wp visual editor media buttons.
  */
 
-class simple_smugmug_tinymce {
+class simple_smugmug_add_gallery {
     
   function __construct() {
-      	// Add a tinyMCE button to our post and page editor
+      	// Add a media button to our post and page editor
   			$this->init();
 
   }
 
   public function init() {
   		
-  		   	add_action( "media_buttons", array( $this, "insert_tinymce_button" ), 15 );
+  		   	add_action( "media_buttons", array( $this, "insert_media_button" ), 15 );
   		    add_action( "admin_enqueue_scripts",  array( $this, "enqueue_scripts" ) );
   		  
   }
@@ -22,12 +22,12 @@ class simple_smugmug_tinymce {
 		//only load the script on the post page
     if ( $hook == 'post-new.php' || $hook == 'post.php' ) {
 
-			wp_enqueue_script('simple_smugmug_tinymce', plugin_dir_url(__FILE__) . "../assets/js/simple-smugmug-tinymce.js", array("jquery"), '', true);
+			wp_enqueue_script('simple_smugmug_media_button', plugin_dir_url(__FILE__) . "/js/simple-smugmug-media-button.js", array("jquery"), '', true);
 		}
 	}
 
 
-	public function insert_tinymce_button()	{
+	public function insert_media_button()	{
  	 	ob_start();
         echo '<style>
 		        .button-secondary.simple-smugmug-insert-gallery {
@@ -189,5 +189,5 @@ class simple_smugmug_tinymce {
 
 
 }
-new simple_smugmug_tinymce();
+new simple_smugmug_add_gallery();
 ?>

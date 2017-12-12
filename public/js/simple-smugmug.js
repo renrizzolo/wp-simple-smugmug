@@ -55,7 +55,6 @@ jQuery(function ($) {
       galleries.push(gallery_9);
     }
 
-  console.log(galleries);
   if ( galleries.length ) {
     $.each(galleries, function (i, gallery){
       retrieveSmug(gallery, i);
@@ -101,7 +100,6 @@ jQuery(function ($) {
     // it's less likely the user is revisiting a gallery so disregard caching.
     // I've sort of disregarded the caching after I extended the plugin to show single galleries etc.
     if (gallery.gallery_id.length > 0) {
-      console.log('retrieving gallery', gallery.gallery_id);
       retrieveAlbum(gallery);
       return;
     }
@@ -140,7 +138,6 @@ jQuery(function ($) {
 
   // final destination
   function setHtml(images, gallery) {
-    console.log(images, gallery);
     var html = '';
        $.each( images, function(i, image) {
           if (i < gallery.image_count) {
@@ -165,13 +162,11 @@ jQuery(function ($) {
       var albums = JSON.parse(localStorage.getItem('smugCacheAlbums'));
       if (albums.length && albums[0] && albums[0].WebUri) {
           $.each( albums, function(i, album) {
-            console.log(i, album.WebUri, album.Name);
             if (i < gallery.album_count) {
               var album_title_html = (gallery.show_album_title === '1') ? '<a class"'+gallery.link_class+'" href="'+secureUrl(album.WebUri)+'"><h4 class="'+gallery.title_class+'">'+album.Name+'</h4></a>' : '';
               var albumHtml  = '<div class="'+gallery.album_container_class+'">'+album_title_html;
               albumHtml += retrieveImagesFromCache(album.AlbumKey, gallery);
               albumHtml += '</div>';
-              console.log('append to ',  gallery.el);
               $('#'+gallery.el).append(albumHtml);
 
           } else {
@@ -188,7 +183,6 @@ jQuery(function ($) {
   function retrieveImagesFromCache(AlbumKey, gallery){
     var images = JSON.parse(localStorage.getItem('smugCacheImages-'+AlbumKey))
     if ( images ) {
-      console.log('setting from cahced ', gallery);
       return setHtml(images, gallery);
     } else {
       invalidateCache();
@@ -252,13 +246,10 @@ jQuery(function ($) {
   //this only gets called if there was nothing in the cache. populates the albums with their images.
     return new Promise (function(resolve, reject) {
       retrieveApi(uri).success(function (data) {
-        console.log(data);
       if (data.Code === 200) {
         var images = data.Response.AlbumImage;
         retrieveImageUrls(images, gallery.image_count)
         .then(function (data){
-          console.log(data);
-
           //caching 
           if ( !gallery.gallery_id.length > 0 ) {
             localStorage.setItem('smugCacheImages-'+key, JSON.stringify(data));
@@ -327,7 +318,6 @@ jQuery(function ($) {
 
   function retrieveAlbum(gallery) {
     retrieveApi('/api/v2/album/'+gallery.gallery_id).success(function (data) {
-      console.log(data);
     if (data.Code === 200) {
       var album = data.Response.Album;
       retrieveImages(album.Uris.AlbumImages.Uri, album.AlbumKey, gallery)
@@ -336,7 +326,6 @@ jQuery(function ($) {
           var albumHtml = '<div class="'+gallery.album_container_class+' '+(gallery.display_in_lightgallery === '1' ? 'lg-smug' : '')+'">'+album_title_html;
           albumHtml += data;
           albumHtml += '</div>';
-          console.log('albumhtml: ', albumHtml);
 
           $('#'+gallery.el).html(albumHtml);
 
