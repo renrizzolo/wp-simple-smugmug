@@ -1,484 +1,467 @@
 <?php
 
-/* Simple Smugmug admin settings */
+/**
+ *
+ * Simple Smugmug admin setting.
+ *
+ * @link       https://renrizzolo.github.com/wp-simple-smugmug
+ * @since      1.0.0
+ *
+ * @package    Simple_Smugmug
+ * @subpackage Simple_Smugmug/admin
+ */
+class Simple_Smugmug_Admin {
 
-class simple_smugmug_admin {
-
-   public function __construct() {
-    if( is_admin() ) {
-			add_action( 'admin_menu', array($this, 'smug_add_admin_menu') );
-			add_action( 'admin_init', array($this, 'smug_settings_init') );
-		
+	public function __construct() {
+		if ( is_admin() ) {
+			add_action( 'admin_menu', array( $this, 'smug_add_admin_menu' ) );
+			add_action( 'admin_init', array( $this, 'smug_settings_init' ) );
 		}
 	}
+
 	protected function defaults() {
 		return array(
-          'cache_expiry' =>  60 * 60 * 6,
-          'album_count' => 3,
-  				'image_count' => 8,
-  				'force_https' => 0,
-  				'display_in_lightgallery' => 1,
-  				'show_gallery_buy_link' => 1,
-  				'show_album_title' => 1,
-  				'api_key' => 'your api key',
-  				'smugmug_username' => 'your smugmug username',
-  				'album_container_class' => 'simple-smugmug-widget',
-  				'first_image_container_class' => 'simple-smugmug-col-3',
-  				'image_container_class' => 'simple-smugmug-col-3',
-  				'image_class' => 'simple-smugmug-img',
-  				'title_class' => 'simple-smugmug-heading',
-  				'link_class' => 'simple-smugmug-link',
-  				'smug_link_icon' => 'lg-cart lg-icon',
+			'api_key'                     => 'your api key',
+			'smugmug_username'            => 'your smugmug username',
+			'cache_expiry'                => 60 * 60 * 6,
+			'album_count'                 => 3,
+			'image_count'                 => 8,
+			'force_https'                 => 0,
+			'display_in_lightgallery'     => 1,
+			'show_gallery_buy_link'       => 1,
+			'show_album_title'            => 1,
+			'album_container_class'       => 'simple-smugmug-widget',
+			'first_image_container_class' => 'simple-smugmug-col-3',
+			'image_container_class'       => 'simple-smugmug-col-3',
+			'image_class'                 => 'simple-smugmug-img',
+			'title_class'                 => 'simple-smugmug-heading',
+			'link_class'                  => 'simple-smugmug-link',
+			'smug_link_icon'              => 'lg-cart lg-icon',
 
-        );
-  }
-	
-
-  public function get_default($key) {
-		$defaults = $this->defaults();
-		return $defaults[$key];
+		);
 	}
 
-	public function get_option($key) {
+	public function get_default( $key ) {
+		$defaults = $this->defaults();
+		return $defaults[ $key ];
+	}
+
+	public function get_option( $key ) {
 		$options = get_option( 'smug_settings' );
 
-		if ( isset( $options[$key] ) && $options[$key] != '') {
-			return $options[$key];
+		if ( isset( $options[ $key ] ) && '' !== $options[ $key ] ) {
+			return $options[ $key ];
 		} else {
-			return $this->defaults()[$key];
+			return $this->defaults()[ $key ];
 		}
 	}
 
-	public function smug_reset_defaults( ) {
+	public function smug_reset_defaults() {
 
 		$options = get_option( 'smug_settings' );
-		  foreach( $options as $key => $value ) {
-		  	//don't reset api key and username
-			  if ($key !== 'api_key' && $key !== 'smugmug_username') {
-			  	$options[$key] = $this->get_default($key);
-			  }
-      }
-      update_option( 'smug_settings', $options );
+		foreach ( $options as $key => $value ) {
+
+			// Don't reset api key and username!
+			if ( 'api_key' !== $key && 'smugmug_username' !== $key ) {
+				$options[ $key ] = $this->get_default( $key );
+			}
+		}
+		update_option( 'smug_settings', $options );
 	}
 
-	public function init_options( ) {
+	public function init_options() {
 		$options = $this->defaults();
-    add_option( 'smug_settings', $options );
+		add_option( 'smug_settings', $options );
 	}
 
 
-	public function smug_add_admin_menu(  ) { 
+	public function smug_add_admin_menu() {
 
-		add_options_page( 'Simple Smugmug', 'Simple Smugmug', 'manage_options', 'simple_smugmug', array($this,'smug_options_page') );
+		add_options_page( 'Simple Smugmug', 'Simple Smugmug', 'manage_options', 'simple_smugmug', array( $this, 'smug_options_page' ) );
 
 	}
 
- public function smug_settings_validate( $option ) {
-    // // Create our array for storing the validated options
-     $output = array();
-     
-    // // Loop through each of the incoming options
-    foreach( $option as $key => $value ) {
-         
-         // Check to see if the current option has a value. If so, process it.
-         if( isset( $option[$key] ) ) {
-         
-             // Strip all HTML and PHP tags and properly handle quoted strings
-             $output[$key] = strip_tags( stripslashes( $option[ $key ] ) );
+	public function smug_settings_validate( $option ) {
+		// Create our array for storing the validated options.
+		$output = array();
 
-         } // end if
-         
-     } // end foreach
-     
-    // // Return the array processing any additional functions filtered by this action
-    // return apply_filters( 'smug_settings_validate', $output, $input );
- // $option = sanitize_text_field( $option );
-  return $output;
-}
+		// Loop through each of the incoming options.
+		foreach ( $option as $key => $value ) {
 
+			// Check to see if the current option has a value. If so, process it.
+			if ( isset( $option[ $key ] ) ) {
 
-	public function smug_settings_init(  ) { 
+				// Strip all HTML and PHP tags and properly handle quoted strings.
+				$output[ $key ] = sanitize_text_field( $option[ $key ] );
+			}
+		}
+
+		// Return the sanitized array.
+		return $output;
+	}
+
+	public function smug_settings_init() {
 
 		$this->init_options();
 		add_action( 'wp_ajax_smug_reset_defaults', array( $this, 'smug_reset_defaults' ) );
 
-		register_setting( 
-			'pluginPage', 
+		register_setting(
+			'pluginPage',
 			'smug_settings',
-			array($this, 'smug_settings_validate')
-		//	array('sanitize_callback' => 'smug_settings_validate')
+			array( $this, 'smug_settings_validate' )
 		);
 
 		add_settings_section(
-			'smug_pluginPage_section', 
-			__( 'Settings', 'wordpress' ), 
-			array($this, 'smug_settings_section_callback'), 
+			'smug_pluginPage_section',
+			__( 'Settings', 'simple_smugmug' ),
+			array( $this, 'smug_settings_section_callback' ),
 			'pluginPage'
 		);
 
 		add_settings_section(
-			'smug_styles_section', 
-			__( 'Styles', 'wordpress' ), 
-			array($this, 'smug_styles_section_callback'), 
+			'smug_styles_section',
+			__( 'Styles', 'simple_smugmug' ),
+			array( $this, 'smug_styles_section_callback' ),
 			'pluginPage'
 		);
 
-		add_settings_field( 
-			'api_key', 
-			__( 'Smugmug API key', 'wordpress' ), 
-			array($this, 'smug_text_field_api_key_render'), 
-			'pluginPage', 
-			'smug_pluginPage_section' 
+		add_settings_field(
+			'api_key',
+			__( 'Smugmug API key', 'simple_smugmug' ),
+			array( $this, 'smug_text_field_api_key_render' ),
+			'pluginPage',
+			'smug_pluginPage_section'
 		);
 
-		add_settings_field( 
-			'smugmug_username', 
-			__( 'Smugmug username', 'wordpress' ), 
-			array($this, 'smug_text_field_smugmug_username_render'), 
-			'pluginPage', 
-			'smug_pluginPage_section' 
+		add_settings_field(
+			'smugmug_username',
+			__( 'Smugmug username', 'simple_smugmug' ),
+			array( $this, 'smug_text_field_smugmug_username_render' ),
+			'pluginPage',
+			'smug_pluginPage_section'
 		);
-		add_settings_field( 
-			'show_album_title', 
-			__( 'Show album title/links', 'wordpress' ), 
-			array($this, 'smug_text_field_show_album_title_render'), 
-			'pluginPage', 
-			'smug_pluginPage_section' 
-		);
-
-		add_settings_field( 
-			'force_https', 
-			__( 'Force https in album links', 'wordpress' ), 
-			array($this, 'smug_text_field_force_https_render'), 
-			'pluginPage', 
-			'smug_pluginPage_section' 
+		add_settings_field(
+			'show_album_title',
+			__( 'Show album title/links', 'simple_smugmug' ),
+			array( $this, 'smug_text_field_show_album_title_render' ),
+			'pluginPage',
+			'smug_pluginPage_section'
 		);
 
-		add_settings_field( 
-			'display_in_lightgallery', 
-			__( 'Open thumbs in lightGallery instead of linking directly to smugmug album', 'wordpress' ), 
-			array($this, 'smug_text_field_display_in_lightgallery_render'), 
-			'pluginPage', 
-			'smug_pluginPage_section' 
+		add_settings_field(
+			'force_https',
+			__( 'Force https in album links', 'simple_smugmug' ),
+			array( $this, 'smug_text_field_force_https_render' ),
+			'pluginPage',
+			'smug_pluginPage_section'
 		);
 
-		add_settings_field( 
-			'show_gallery_buy_link', 
-			__( 'If using lightgallery, show a buy link for each image', 'wordpress' ), 
-			array($this, 'smug_text_field_show_gallery_buy_link_render'), 
-			'pluginPage', 
-			'smug_pluginPage_section' 
+		add_settings_field(
+			'display_in_lightgallery',
+			__( 'Open thumbs in lightGallery instead of linking directly to smugmug album', 'simple_smugmug' ),
+			array( $this, 'smug_text_field_display_in_lightgallery_render' ),
+			'pluginPage',
+			'smug_pluginPage_section'
 		);
 
-		add_settings_field( 
-			'cache_expiry', 
-			__( 'Cache expiry time in seconds', 'wordpress' ), 
-			array($this, 'smug_text_field_cache_expiry_render'), 
-			'pluginPage', 
-			'smug_pluginPage_section' 
+		add_settings_field(
+			'show_gallery_buy_link',
+			__( 'If using lightgallery, show a buy link for each image', 'simple_smugmug' ),
+			array( $this, 'smug_text_field_show_gallery_buy_link_render' ),
+			'pluginPage',
+			'smug_pluginPage_section'
 		);
 
-		add_settings_field( 
-			'album_count', 
-			__( 'number of albums to show', 'wordpress' ), 
-			array($this, 'smug_text_album_count_render'), 
-			'pluginPage', 
-			'smug_pluginPage_section' 
+		add_settings_field(
+			'cache_expiry',
+			__( 'Cache expiry time in seconds', 'simple_smugmug' ),
+			array( $this, 'smug_text_field_cache_expiry_render' ),
+			'pluginPage',
+			'smug_pluginPage_section'
 		);
 
-		add_settings_field( 
-			'image_count', 
-			__( 'Number of images per album to show (max 100)', 'wordpress' ), 
-			array($this, 'smug_text_image_count_render'), 
-			'pluginPage', 
-			'smug_pluginPage_section' 
+		add_settings_field(
+			'album_count',
+			__( 'number of albums to show', 'simple_smugmug' ),
+			array( $this, 'smug_text_album_count_render' ),
+			'pluginPage',
+			'smug_pluginPage_section'
 		);
 
-		add_settings_field( 
-			'album_container_class', 
-			__( 'Album container class', 'wordpress' ), 
-			array($this, 'smug_text_album_container_class_render'), 
-			'pluginPage', 
-			'smug_styles_section' 
+		add_settings_field(
+			'image_count',
+			__( 'Number of images per album to show (max 100)', 'simple_smugmug' ),
+			array( $this, 'smug_text_image_count_render' ),
+			'pluginPage',
+			'smug_pluginPage_section'
 		);
 
-		add_settings_field( 
-			'first_image_container_class', 
-			__( 'First image container class', 'wordpress' ), 
-			array($this, 'smug_text_first_image_container_class_render'), 
-			'pluginPage', 
-			'smug_styles_section' 
+		add_settings_field(
+			'album_container_class',
+			__( 'Album container class', 'simple_smugmug' ),
+			array( $this, 'smug_text_album_container_class_render' ),
+			'pluginPage',
+			'smug_styles_section'
 		);
 
-		add_settings_field( 
-			'image_container_class', 
-			__( 'Image container class', 'wordpress' ), 
-			array($this, 'smug_text_image_container_class_render'), 
-			'pluginPage', 
-			'smug_styles_section' 
+		add_settings_field(
+			'first_image_container_class',
+			__( 'First image container class', 'simple_smugmug' ),
+			array( $this, 'smug_text_first_image_container_class_render' ),
+			'pluginPage',
+			'smug_styles_section'
 		);
 
-		add_settings_field( 
-			'image_class', 
-			__( 'Image class', 'wordpress' ), 
-			array($this, 'smug_text_image_class_render'), 
-			'pluginPage', 
-			'smug_styles_section' 
+		add_settings_field(
+			'image_container_class',
+			__( 'Image container class', 'simple_smugmug' ),
+			array( $this, 'smug_text_image_container_class_render' ),
+			'pluginPage',
+			'smug_styles_section'
 		);
 
-		add_settings_field( 
-			'title_class', 
-			__( 'Album title class', 'wordpress' ), 
-			array($this, 'smug_text_title_class_render'), 
-			'pluginPage', 
-			'smug_styles_section' 
+		add_settings_field(
+			'image_class',
+			__( 'Image class', 'simple_smugmug' ),
+			array( $this, 'smug_text_image_class_render' ),
+			'pluginPage',
+			'smug_styles_section'
 		);
 
-		add_settings_field( 
-			'link_class', 
-			__( 'Album title link class', 'wordpress' ), 
-			array($this, 'smug_text_link_class_render'), 
-			'pluginPage', 
-			'smug_styles_section' 
+		add_settings_field(
+			'title_class',
+			__( 'Album title class', 'simple_smugmug' ),
+			array( $this, 'smug_text_title_class_render' ),
+			'pluginPage',
+			'smug_styles_section'
 		);
 
-		add_settings_field( 
-			'smug_link_icon', 
-			__( 'Gallery buy link icon class', 'wordpress' ), 
-			array($this, 'smug_text_smug_link_icon_render'), 
-			'pluginPage', 
-			'smug_styles_section' 
+		add_settings_field(
+			'link_class',
+			__( 'Album title link class', 'simple_smugmug' ),
+			array( $this, 'smug_text_link_class_render' ),
+			'pluginPage',
+			'smug_styles_section'
 		);
 
-		add_settings_field( 
-			'reset_defaults_button', 
-			__( 'Reset values to their defaults', 'wordpress' ), 
-			array($this, 'reset_defaults_button'), 
-			'pluginPage', 
-			'smug_styles_section' 
+		add_settings_field(
+			'smug_link_icon',
+			__( 'Gallery buy link icon class', 'simple_smugmug' ),
+			array( $this, 'smug_text_smug_link_icon_render' ),
+			'pluginPage',
+			'smug_styles_section'
+		);
+
+		add_settings_field(
+			'reset_defaults_button',
+			__( 'Reset values to their defaults', 'simple_smugmug' ),
+			array( $this, 'reset_defaults_button' ),
+			'pluginPage',
+			'smug_styles_section'
 		);
 
 	}
 
-	public function reset_defaults_button(  ) {
-		 ?>
-		 <script>
-	    function resetDefaults(event) {
-	      event.preventDefault();
+	public function reset_defaults_button() {
+	?>
+		<script>
+			function resetDefaults(event) {
+				event.preventDefault();
 
-	      var data = {
-	        'action': 'smug_reset_defaults',
-	      };
+				var data = {
+					'action': 'smug_reset_defaults',
+				};
 
-	      jQuery('#reset_defaults_button').attr('disabled', 'true');
+				jQuery('#reset_defaults_button').attr('disabled', 'true');
 
-	      jQuery.post('<?php echo admin_url( 'admin-ajax.php' ); ?>', data, function(response) {
-	      	console.log(response);
-	      jQuery('#reset_defaults_button').text('Done!').attr('disabled', 'true');
-	     	window.location.reload();
-	      }, 'json');
+				jQuery.post('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', data, function(response) {
+					console.log(response);
+					jQuery('#reset_defaults_button').text('Done!').attr('disabled', 'true');
+					window.location.reload();
+				}, 'json');
 
-	    }
-    </script>
-    <button onClick="resetDefaults(event)" id="reset_defaults_button">Reset</button>
-    <?php
+		}
+		</script>
+	<button onClick="resetDefaults(event)" id="reset_defaults_button">Reset</button>
+	<?php
 	}
 
-	public function smug_text_field_api_key_render(  ) { 
-		$default = $this->get_default( 'api_key' );
+	public function smug_text_field_api_key_render() {
 		$option = $this->get_option( 'api_key' );
 
 		?>
-		<input class="widefat" type='text' name='smug_settings[api_key]' value='<?php echo sanitize_text_field($option)  ?>'>
+		<input class="widefat" type='text' name='smug_settings[api_key]' value='<?php echo esc_html( $option ); ?>'>
 		<?php
 
 	}
 
 
-	public function smug_text_field_smugmug_username_render(  ) { 
-		$default = $this->get_default( 'smugmug_username' );
+	public function smug_text_field_smugmug_username_render() {
 		$option = $this->get_option( 'smugmug_username' );
 
 		?>
-		<input class="widefat" type='text' name='smug_settings[smugmug_username]' value='<?php echo sanitize_text_field($option)  ?>'>
+		<input class="widefat" type='text' name='smug_settings[smugmug_username]' value='<?php echo esc_html( $option ); ?>'>
 		<?php
 
 	}
-	public function smug_text_field_show_album_title_render(  ) {
-		$default = $this->get_default( 'show_album_title' );
+	public function smug_text_field_show_album_title_render() {
 		$option = get_option( 'smug_settings' );
 
 		?>
-		<input type='checkbox' id="smug_settings[show_album_title]" name='smug_settings[show_album_title]' value="1" <?php checked( '1', $option["show_album_title"] ); ?> />
+		<input type='checkbox' id="smug_settings[show_album_title]" name='smug_settings[show_album_title]' value="1" <?php checked( '1', $option['show_album_title'] ); ?> />
 		<?php
 
 	}
-	public function smug_text_field_force_https_render(  ) { 
-		$default = $this->get_default( 'force_https' );
+	public function smug_text_field_force_https_render() {
 		$option = get_option( 'smug_settings' );
 		?>
-		<input type='checkbox' id="smug_settings[force_https]" name='smug_settings[force_https]' value="1" <?php checked( '1', $option["force_https"] ); ?> />
+		<input type='checkbox' id="smug_settings[force_https]" name='smug_settings[force_https]' value="1" <?php checked( '1', $option['force_https'] ); ?> />
 		<?php
 
 	}
-	public function smug_text_field_display_in_lightgallery_render(  ) { 
-		$default = $this->get_default( 'display_in_lightgallery' );
+	public function smug_text_field_display_in_lightgallery_render() {
 		$option = get_option( 'smug_settings' );
 		?>
-		<input type='checkbox' id="smug_settings[display_in_lightgallery]" name='smug_settings[display_in_lightgallery]' value="1" <?php checked( '1', $option["display_in_lightgallery"] ); ?> />
+		<input type='checkbox' id="smug_settings[display_in_lightgallery]" name='smug_settings[display_in_lightgallery]' value="1" <?php checked( '1', $option['display_in_lightgallery'] ); ?> />
 		<?php
 
 	}
-	public function smug_text_field_show_gallery_buy_link_render(  ) { 
-		$default = $this->get_default( 'show_gallery_buy_link' );
+	public function smug_text_field_show_gallery_buy_link_render() {
 		$option = get_option( 'smug_settings' );
 		?>
-		<input type='checkbox' id="smug_settings[show_gallery_buy_link]" name='smug_settings[show_gallery_buy_link]' value="1" <?php checked( '1', $option["show_gallery_buy_link"] ); ?> />
+		<input type='checkbox' id="smug_settings[show_gallery_buy_link]" name='smug_settings[show_gallery_buy_link]' value="1" <?php checked( '1', $option['show_gallery_buy_link'] ); ?> />
 		<?php
 
 	}
-	public function smug_text_field_cache_expiry_render(  ) { 
-		$default = $this->get_default( 'cache_expiry' );
+	public function smug_text_field_cache_expiry_render() {
 		$option = $this->get_option( 'cache_expiry' );
 		?>
-		<input type='number' name='smug_settings[cache_expiry]' value='<?php echo sanitize_text_field($option) ?>'>
+		<input type='number' name='smug_settings[cache_expiry]' value='<?php echo esc_html( $option ); ?>'>
 		<?php
 
 	}
 
 
-	public function smug_text_album_count_render(  ) { 
-		$default = $this->get_default( 'album_count' );
+	public function smug_text_album_count_render() {
 		$option = $this->get_option( 'album_count' );
 		?>
-		<input type='number' name='smug_settings[album_count]' value='<?php echo sanitize_text_field($option) ?>'>
+		<input type='number' name='smug_settings[album_count]' value='<?php echo esc_html( $option ); ?>'>
 		<?php
 
 	}
 
 
-	public function smug_text_image_count_render(  ) { 
-		$default = $this->get_default( 'image_count' );
+	public function smug_text_image_count_render() {
 		$option = $this->get_option( 'image_count' );
 		?>
-		<input type='number' name='smug_settings[image_count]' value='<?php echo sanitize_text_field($option) ?>'>
+		<input type='number' name='smug_settings[image_count]' value='<?php echo esc_html( $option ); ?>'>
 		<?php
 
 	}
 
 
-	public function smug_text_album_container_class_render(  ) { 
+	public function smug_text_album_container_class_render() {
 
-		$default = $this->get_default( 'album_container_class' );
 		$option = $this->get_option( 'album_container_class' );
 		?>
-		<input class="widefat" type='text' name='smug_settings[album_container_class]' value='<?php echo sanitize_text_field($option) ?>'>
+		<input class="widefat" type='text' name='smug_settings[album_container_class]' value='<?php echo esc_html( $option ); ?>'>
 		<?php
 
 	}
 
 
-	public function smug_text_first_image_container_class_render(  ) { 
+	public function smug_text_first_image_container_class_render() {
 
-		$default = $this->get_default( 'first_image_container_class' );
 		$option = $this->get_option( 'first_image_container_class' );
 		?>
-		<input class="widefat" type='text' name='smug_settings[first_image_container_class]' value='<?php echo sanitize_text_field($option) ?>'>
+		<input class="widefat" type='text' name='smug_settings[first_image_container_class]' value='<?php echo esc_html( $option ); ?>'>
 		<?php
 
 	}
 
-	public function smug_text_image_container_class_render(  ) { 
+	public function smug_text_image_container_class_render() {
 
-		$default = $this->get_default( 'image_container_class' );
 		$option = $this->get_option( 'image_container_class' );
 		?>
-		<input class="widefat" type='text' name='smug_settings[image_container_class]' value='<?php echo sanitize_text_field($option) ?>'>
+		<input class="widefat" type='text' name='smug_settings[image_container_class]' value='<?php echo esc_html( $option ); ?>'>
 		<?php
 
 	}
 
-	public function smug_text_image_class_render(  ) { 
-		$default = $this->get_default( 'image_class' );
+	public function smug_text_image_class_render() {
 		$option = $this->get_option( 'image_class' );
 		?>
-		<input class="widefat" type='text' name='smug_settings[image_class]' value='<?php echo sanitize_text_field($option) ?>'>
+		<input class="widefat" type='text' name='smug_settings[image_class]' value='<?php echo esc_html( $option ); ?>'>
 		<?php
 
 	}
 
-	public function smug_text_title_class_render(  ) { 
+	public function smug_text_title_class_render() {
 
-		$default = $this->get_default( 'title_class' );
 		$option = $this->get_option( 'title_class' );
 		?>
-		<input class="widefat" type='text' name='smug_settings[title_class]' value='<?php echo sanitize_text_field($option) ?>'>
+		<input class="widefat" type='text' name='smug_settings[title_class]' value='<?php echo esc_html( $option ); ?>'>
 		<?php
 
 	}
 
-	public function smug_text_link_class_render(  ) { 
+	public function smug_text_link_class_render() {
 
-		$default = $this->get_default( 'link_class' );
 		$option = $this->get_option( 'link_class' );
 		?>
-		<input class="widefat" type='text' name='smug_settings[link_class]' width="300" value='<?php echo sanitize_text_field($option) ?>'>
+		<input class="widefat" type='text' name='smug_settings[link_class]' width="300" value='<?php echo esc_html( $option ); ?>'>
 		<?php
 
 	}
 
-	public function smug_text_smug_link_icon_render(  ) { 
+	public function smug_text_smug_link_icon_render() {
 
-		$default = $this->get_default( 'smug_link_icon' );
 		$option = $this->get_option( 'smug_link_icon' );
 		?>
-		<input class="widefat" type='text' name='smug_settings[smug_link_icon]' width="300" value='<?php echo sanitize_text_field($option) ?>'>
+		<input class="widefat" type='text' name='smug_settings[smug_link_icon]' width="300" value='<?php echo esc_html( $option ); ?>'>
 		<?php
 
 	}
 
 
-	public function smug_settings_section_callback(  ) {
+	public function smug_settings_section_callback() {
 
 			?>
 
-
 		<?php
 
 	}
 
+	public function smug_styles_section_callback() {
 
-	public function smug_styles_section_callback(  ) { 
-
-		echo __( 'Use the default included stylesheet or add your own classes here', 'wordpress' );
+		echo __( 'Use the default included stylesheet or add your own classes here', 'simple_smugmug' );
 
 	}
 
-	public function smug_options_page(  ) { 
-	if( isset( $_GET[ 'tab' ] ) )
-	{
-		$active_tab = $_GET[ 'tab' ];
-	}else{
-	//set settings_tab tab as a default tab.
-		$active_tab = 'settings_tab' ;
-	}
+	public function smug_options_page() {
+		if ( isset( $_GET['tab'] ) ) {
+			$active_tab = sanitize_text_field( wp_unslash( $_GET['tab'] ) );
+		} else {
+			// Set settings_tab tab as a default tab.
+			$active_tab = 'settings_tab';
+		}
 
 		?>
 		<form action='options.php' method='post' style="max-width: 800px;">
 
 			<h2>Simple Smugmug</h2>
-	    <h2 class="nav-tab-wrapper">
-    		<a href="<?php get_admin_url(); ?>options-general.php?page=simple_smugmug&tab=settings_tab" class="nav-tab <?php echo $active_tab == 'settings_tab' ? 'nav-tab-active' : ''; ?>">Settings</a>
-    		<a href="<?php get_admin_url(); ?>options-general.php?page=simple_smugmug&tab=usage_tab" class="nav-tab <?php echo $active_tab == 'usage_tab' ? 'nav-tab-active' : ''; ?>">Usage</a>
+			<h2 class="nav-tab-wrapper">
+			<a href="<?php get_admin_url(); ?>options-general.php?page=simple_smugmug&tab=settings_tab" class="nav-tab <?php echo 'settings_tab' === $active_tab ? 'nav-tab-active' : ''; ?>">Settings</a>
+				<a href="<?php get_admin_url(); ?>options-general.php?page=simple_smugmug&tab=usage_tab" class="nav-tab <?php echo 'usage_tab' === $active_tab ? 'nav-tab-active' : ''; ?>">Usage</a>
 			</h2>
 			<?php
 
-			if( $active_tab == 'settings_tab' ) {
-      	settings_fields( 'pluginPage' );
+			if ( 'settings_tab' === $active_tab ) {
+				settings_fields( 'pluginPage' );
 				do_settings_sections( 'pluginPage' );
 				submit_button();
-      } else {
-	     ?>
+			} else {
+			?>
 
 		<h3>Usage:</h3> 
 		<h4>There are 2 ways to use this plugin:</h4>
@@ -534,16 +517,13 @@ add_filter("simple_smugmug_media_button", "simple_smugmug_button");
 		</pre>
 		</li>
 	</ul>
-	     <?php
-      } 
-         
-			?>
+		<?php
+			}
+		?>
 
 		</form>
 		<?php
 
 	}
 }
-	new simple_smugmug_admin();
-
-?>
+	new Simple_Smugmug_Admin();

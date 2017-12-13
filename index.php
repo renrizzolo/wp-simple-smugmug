@@ -2,7 +2,7 @@
 /**
  * A simple smugmug gallery plugin using the Smugmug REST API v2
  *
- * @link              https://renrizzolo.github.com/wp-imple-smugmug
+ * @link              https://renrizzolo.github.com/wp-simple-smugmug
  * @since             1.0.0
  * @package           Simple_Smugmug
  *
@@ -15,6 +15,7 @@
  * Author URI: https://renrizzolo.github.com/
  * License: GPLv3 or later
  * License URI: http://www.gnu.org/licenses/gpl-3.0.txt
+ * Text Domain: simple_smugmug
  **/
 
 ?>
@@ -135,7 +136,7 @@ function get_loader() {
  */
 function plugin_settings_link( $links ) {
 	$url           = get_admin_url() . 'options-general.php?page=simple_smugmug';
-	$settings_link = '<a href="' . $url . '">' . __( 'Settings', 'wordpress' ) . '</a>';
+	$settings_link = '<a href="' . $url . '">' . __( 'Settings', 'simple_smugmug' ) . '</a>';
 	array_unshift( $links, $settings_link );
 	return $links;
 }
