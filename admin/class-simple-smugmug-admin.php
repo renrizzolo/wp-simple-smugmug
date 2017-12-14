@@ -11,7 +11,9 @@
  * @subpackage Simple_Smugmug/admin
  */
 class Simple_Smugmug_Admin {
-
+	/**
+	 * Hook into admin_menu and admin_init
+	 **/
 	public function __construct() {
 		if ( is_admin() ) {
 			add_action( 'admin_menu', array( $this, 'smug_add_admin_menu' ) );
@@ -19,6 +21,9 @@ class Simple_Smugmug_Admin {
 		}
 	}
 
+	/**
+	 * Returns the array of default options.
+	 **/
 	protected function defaults() {
 		return array(
 			'api_key'                     => 'your api key',
@@ -41,11 +46,22 @@ class Simple_Smugmug_Admin {
 		);
 	}
 
+	/**
+	 * Returns a default option by its key.
+	 *
+	 * @param string $key The key of the default option.
+	 **/
 	public function get_default( $key ) {
 		$defaults = $this->defaults();
 		return $defaults[ $key ];
 	}
 
+	/**
+	 * Returns an option by its key.
+	 * If empty or not set, returns the default.
+	 *
+	 * @param string $key The key of the option.
+	 **/
 	public function get_option( $key ) {
 		$options = get_option( 'smug_settings' );
 
@@ -56,6 +72,9 @@ class Simple_Smugmug_Admin {
 		}
 	}
 
+	/**
+	 * Resets options to their defaults ( called via ajax )
+	 **/
 	public function smug_reset_defaults() {
 
 		$options = get_option( 'smug_settings' );
@@ -69,40 +88,79 @@ class Simple_Smugmug_Admin {
 		update_option( 'smug_settings', $options );
 	}
 
+	/**
+	 * Adds the options.
+	 **/
 	public function init_options() {
 		$options = $this->defaults();
 		add_option( 'smug_settings', $options );
 	}
 
-
+	/**
+	 * Add Simple Smugmug to Settings menu.
+	 **/
 	public function smug_add_admin_menu() {
 
 		add_options_page( 'Simple Smugmug', 'Simple Smugmug', 'manage_options', 'simple_smugmug', array( $this, 'smug_options_page' ) );
 
 	}
 
-	public function smug_settings_validate( $option ) {
+	/**
+	 * Validates text/number input options being saved
+	 *
+	 * @param array $options The options to be validated.
+	 **/
+	public function smug_settings_validate( $options ) {
+
 		// Create our array for storing the validated options.
 		$output = array();
 
+		// hard setting the checkboxes to 0 ( they will be overwritten to 1 if they are set (i.e checked) in the foreach loop ).
+		$output['show_album_title']        = 0;
+		$output['force_https']             = 0;
+		$output['display_in_lightgallery'] = 0;
+		$output['show_gallery_buy_link']   = 0;
 		// Loop through each of the incoming options.
-		foreach ( $option as $key => $value ) {
+		foreach ( $options as $key => $value ) {
 
 			// Check to see if the current option has a value. If so, process it.
-			if ( isset( $option[ $key ] ) ) {
+			if ( isset( $options[ $key ] ) ) {
 
 				// Strip all HTML and PHP tags and properly handle quoted strings.
-				$output[ $key ] = sanitize_text_field( $option[ $key ] );
+				$output[ $key ] = sanitize_text_field( $options[ $key ] );
 			}
+
 		}
 
 		// Return the sanitized array.
 		return $output;
 	}
 
+	/**
+	 * Validates checkbox options being saved
+	 *
+	 * @param array $options The options to be validated.
+	 **/
+	public function smug_settings_validate_checkboxes( $options ) {
+
+		// return 1 or 0 for checkboxes instead of unsetting when unchcecked.
+		$output = array();
+		foreach ( $options as $key => $value ) {
+			$output[$key] = ( 1 === $option[$key] ) ? 1 : 0;
+		}
+		return $output;
+	}
+
+	/**
+	 * Initialize the settings page.
+	 *
+	 * Registers settings and adds settings sections using the plugin settings API.
+	 **/
 	public function smug_settings_init() {
 
+		// Add the options if they haven't been added already.
 		$this->init_options();
+
 		add_action( 'wp_ajax_smug_reset_defaults', array( $this, 'smug_reset_defaults' ) );
 
 		register_setting(
@@ -262,6 +320,9 @@ class Simple_Smugmug_Admin {
 
 	}
 
+	/**
+	 * JS and html for reset defaults button
+	 **/
 	public function reset_defaults_button() {
 	?>
 		<script>
@@ -425,10 +486,7 @@ class Simple_Smugmug_Admin {
 
 
 	public function smug_settings_section_callback() {
-
-			?>
-
-		<?php
+		echo __( 'Settings for the default output', 'simple_smugmug' );
 
 	}
 
@@ -451,7 +509,7 @@ class Simple_Smugmug_Admin {
 
 			<h2>Simple Smugmug</h2>
 			<h2 class="nav-tab-wrapper">
-			<a href="<?php get_admin_url(); ?>options-general.php?page=simple_smugmug&tab=settings_tab" class="nav-tab <?php echo 'settings_tab' === $active_tab ? 'nav-tab-active' : ''; ?>">Settings</a>
+				<a href="<?php get_admin_url(); ?>options-general.php?page=simple_smugmug&tab=settings_tab" class="nav-tab <?php echo 'settings_tab' === $active_tab ? 'nav-tab-active' : ''; ?>">Settings	</a>
 				<a href="<?php get_admin_url(); ?>options-general.php?page=simple_smugmug&tab=usage_tab" class="nav-tab <?php echo 'usage_tab' === $active_tab ? 'nav-tab-active' : ''; ?>">Usage</a>
 			</h2>
 			<?php
@@ -463,65 +521,67 @@ class Simple_Smugmug_Admin {
 			} else {
 			?>
 
-		<h3>Usage:</h3> 
-		<h4>There are 2 ways to use this plugin:</h4>
-		<p><strong>1)</strong> Use shortcode <code>[simple_smugmug]</code> to display the <code>[album_count]</code> most recent albums with the below settings. This is intended to be used as a widget in e.g a sidebar.</p>
-		<p><strong>2)</strong> Display (up to 10) single galleries in a post by passing its album key into the shortcode:</p>
-		<p>Automatically: create a post and press the Add Smugmug Gallery button (It should be next to Add Media). This will Fetch the last 50 galleries. Select the gallery from the dropdown.</p>
-		<p>Manually: The album key can be found by inspecting the element of the gallery on the page that lists the galleries, and looking for the attribute <code>data-clientid</code>. It will be in this format: <code>/api/v2/album/xxxxxx</code>. The album key is the xxxxxx part. (An easier way is if you're logged in, press the replace image button then look for AlbumKey in the url).</p>
-	<ul>
-		<li>The 'feed' version (i.e shortcode used without a gallery_id) will be cached in localstorage (album uris, captions, titles, image urls etc). The idea is that if you have it in a sidebar, as someone navigates your site, they won't have to do the api requests on every page. You can set the cache time to 0 if you don't want this behaviour.  </li>
-		<li>You can add multiple shortcodes to a post.</li>
-		<li>No more than 100 images will be displayed per gallery. This is the pagination limit of the Smugmug API. </li>
-		<li>The loading spinner can be overridden with html passed to the <code>'simple_smugmug_loader'</code> hook.
-			<br/>
-			<pre><code style="display:block;">
-// your theme's functions.php
-function my_loader() {
-	return "loading";
-}
-add_filter( "simple_smugmug_loader", "my_loader" );
-			</code></pre>
-		</li>
-		<li>The displaying of the media button in the wp post editor can also be filtered with <code>'simple_smugmug_media_button'</code>:
-				<br/>
-			<pre>
-				<code style="display:block;">
-// your theme's functions.php
-function simple_smugmug_button($request){
-	//only show the button when editing post in the galleries category
-	if (in_category('galleries') ) {
-		return $request;
+			<h3>Usage:</h3> 
+			<h4>There are 2 ways to use this plugin:</h4>
+			<p><strong>1)</strong> Use shortcode <code>[simple_smugmug]</code> to display the <code>[album_count]</code> most recent albums with the below settings. This is intended to be used as a widget in e.g a sidebar.</p>
+			<p><strong>2)</strong> Display (up to 10) single galleries in a post by passing its album key into the shortcode:</p>
+			<p>Automatically: create a post and press the Add Smugmug Gallery button (It should be next to Add Media). This will Fetch the last 50 galleries. Select the gallery from the dropdown.</p>
+			<p>Manually: The album key can be found by inspecting the element of the gallery on the page that lists the galleries, and looking for the attribute <code>data-clientid</code>. It will be in this format: <code>/api/v2/album/xxxxxx</code>. The album key is the xxxxxx part. (An easier way is if you're logged in, press the replace image button then look for AlbumKey in the url).</p>
+			<ul>
+				<li>The 'feed' version (i.e shortcode used without a gallery_id) will be cached in localstorage (album uris, captions, titles, image urls etc). The idea is that if you have it in a sidebar, as someone navigates your site, they won't have to do the api requests on every page. You can set the cache time to 0 if you don't want this behaviour.  </li>
+				<li>You can add multiple shortcodes to a post.</li>
+				<li>No more than 100 images will be displayed per gallery. This is the pagination limit of the Smugmug API. </li>
+				<li>The loading spinner can be overridden with html passed to the <code>'simple_smugmug_loader'</code> hook.
+					<br/>
+					<pre>
+						<code style="display:block;">
+	// your theme's functions.php
+	function my_loader() {
+		return "loading";
 	}
-}
-add_filter("simple_smugmug_media_button", "simple_smugmug_button");
-			</code>
-		</pre>
-		</li>
-		<li>
-			Shortcode attributes:
-<pre>
+	add_filter( "simple_smugmug_loader", "my_loader" );
+						</code>
+					</pre>
+				</li>
+				<li>The displaying of the media button in the wp post editor can also be filtered with <code>'simple_smugmug_media_button'</code>:
+					<br/>
+					<pre>
+						<code style="display:block;">
+	// your theme's functions.php
+	function simple_smugmug_button($request){
+		//only show the button when editing post in the galleries category
+		if (in_category('galleries') ) {
+			return $request;
+		}
+	}
+	add_filter("simple_smugmug_media_button", "simple_smugmug_button");
+						</code>
+					</pre>
+				</li>
+				<li>
+				Shortcode attributes:
+					<pre>
 
-'image_count' | number
-'display_in_lightgallery' | 0 (false) or 1 (true)
-'show_gallery_buy_link' | 0 (false) or 1 (true)
-'show_album_title' | 0 (false) or 1 (true)
-'album_container_class' | string
-'first_image_container_class' | string
-'image_container_class' | string
-'image_class' | string
-'title_class' | string
-'link_class' | string
-'smug_link_icon' | string
+	'image_count' | number
+	'display_in_lightgallery' | 0 (false) or 1 (true)
+	'show_gallery_buy_link' | 0 (false) or 1 (true)
+	'show_album_title' | 0 (false) or 1 (true)
+	'album_container_class' | string
+	'first_image_container_class' | string
+	'image_container_class' | string
+	'image_class' | string
+	'title_class' | string
+	'link_class' | string
+	'smug_link_icon' | string
 
-		</pre>
-		</li>
-	</ul>
-		<?php
+					</pre>
+				</li>
+			</ul>
+			<?php
 			}
-		?>
+			?>
 
-		</form>
+	</form>
 		<?php
 
 	}

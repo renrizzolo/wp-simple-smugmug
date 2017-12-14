@@ -1,4 +1,5 @@
 <?php
+
 /**
  * A simple smugmug gallery plugin using the Smugmug REST API v2
  *

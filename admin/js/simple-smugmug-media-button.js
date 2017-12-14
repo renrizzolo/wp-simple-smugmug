@@ -33,13 +33,17 @@ jQuery(function($) {
     if ( typeof latestAlbums === 'undefined' ) {
       getLatestAlbums().success( function(data) {
         var latestAlbums = data.Response.Album;
-        var options = '';
         $.each(latestAlbums, function(i, album){
-          options +='<option value='+album.AlbumKey+'>'+album.Name+'</option>';
+
+          var option = $( '<option />' );
+          option.attr( 'value', album.AlbumKey );
+          option.text( album.Name );
+          select.append(option);
+
         });
-        select.html(options);
+        //remove 'loading...' option
+        $('.smugmug-albums select #loading').remove();
       }).error( function(err){
-        console.log(err);
         $('.smugmug-albums span').text(err.Message);
       });
     }
@@ -94,12 +98,13 @@ jQuery(function($) {
 
   function getVal(el){
     var val = $('*[name="simple_smugmug['+el+']"]').val();
-    return val ? val.toString() : '';
+    return val.toString();
   }
 
   function getData(el){
     var data = $('*[name="simple_smugmug['+el+']"]').data('current');
-    return data ? data.toString() : '';
+    console.log(el, data);
+    return ( '' !== data && 'undefined' !== typeof data ) && data.toString() || '';
   }
 
   function getAttribute(el){
@@ -108,6 +113,7 @@ jQuery(function($) {
     if (el === 'gallery_id_select'){
       el = 'gallery_id';
     }
+    console.log('val: ', val, 'data: ', data );
     if ( val !== data || !data ) {
       return el+'="'+ val + '" ';
     } else {
