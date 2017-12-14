@@ -143,16 +143,23 @@ jQuery(function ($) {
 
   // final destination
   function setHtml(images, gallery) {
-    var html = '';
+    var html = $('<div/>');
     $.each( images, function(i, image) {
       if (i < gallery.image_count) {
-        html += '<a href="'+( gallery.display_in_lightgallery === '1' && gallery.gallery_id ? (image.LargeImageUrl || image.MediumImageUrl) : secureUrl(image.WebUri) )+'"'+
-        'data-sub-html="'+image.Caption+'"'+
-        'data-smug-url="'+secureUrl(image.WebUri)+'"'+
-        'target="_blank"'+
-        'class="'+ (i < 1 ? gallery.first_image_container_class : gallery.image_container_class)+' '+(gallery.display_in_lightgallery === '1' ? 'lg-smug-item' : '')+'"'+
-        'title="'+image.Caption+'">'+
-        '<img src="'+image.ThumbnailUrl+'"class="'+gallery.image_class+'"/></a>';
+        var a = $( '<a/>' );
+        a.attr( 'href', ( gallery.display_in_lightgallery === '1' && gallery.gallery_id ? (image.LargeImageUrl || image.MediumImageUrl) : secureUrl(image.WebUri) ) );
+        a.attr('target', '_blank');
+        a.attr('class', (i < 1 ? gallery.first_image_container_class : gallery.image_container_class)+' '+(gallery.display_in_lightgallery === '1' ? 'lg-smug-item' : ''));
+        a.attr('title', image.Caption);
+        a.data('sub-html', image.Caption);
+        a.data('smug-url', secureUrl(image.WebUri) );
+        var img = $( '<img/>' );
+        img.attr('src', image.ThumbnailUrl);
+        img.attr('class', gallery.image_class);
+
+        a.append(img);
+        html.append(a);
+
       }
     });
 
@@ -162,17 +169,26 @@ jQuery(function ($) {
 
   }
 
+  function generateAlbumHtml(gallery, album, images) {
+    var album_link = $( '<a />' );
+    var album_title = $( '<h4 />');
+    album_title.attr( 'class', gallery.title_class ).text( album.Name );
+    album_link.attr( 'class', gallery.link_class ).attr( 'href', secureUrl(album.WebUri) ).append(album_title);
+    var album_title_html = (gallery.show_album_title === '1') ? album_link : '';
+    var albumContainer = $( '<div/>' );
+    albumContainer.attr( 'class', gallery.album_container_class+' '+(gallery.display_in_lightgallery === '1' ? 'lg-smug' : '') ).append(album_title_html).append(images);
+    $('#'+gallery.el).append(albumContainer);
+  }
+
   function retrieveAlbumsFromCache(gallery){
     if (localStorage.getItem('smugCacheAlbums')){
       var albums = JSON.parse(localStorage.getItem('smugCacheAlbums'));
       if (albums.length && albums[0] && albums[0].WebUri) {
         $.each( albums, function(i, album) {
           if (i < gallery.album_count) {
-            var album_title_html = (gallery.show_album_title === '1') ? '<a class="'+gallery.link_class+'" href="'+secureUrl(album.WebUri)+'"><h4 class="'+gallery.title_class+'">'+album.Name+'</h4></a>' : '';
-            var albumHtml  = '<div class="'+gallery.album_container_class+'">'+album_title_html;
-            albumHtml += retrieveImagesFromCache(album.AlbumKey, gallery);
-            albumHtml += '</div>';
-            $('#'+gallery.el).append(albumHtml);
+            var images = retrieveImagesFromCache(album.AlbumKey, gallery);
+            generateAlbumHtml(gallery, album, images);
+
           } else {
             return;
           }
@@ -202,16 +218,9 @@ jQuery(function ($) {
         $.each( albums, function(i, album) {
           if (i < gallery.album_count) {
             retrieveImages(album.Uris.AlbumImages.Uri, album.AlbumKey, gallery)
-              .then(function (data){ 
+              .then(function (images){ 
 
-                //set up html
-                var album_title_html = (gallery.show_album_title === '1') ?
-                  '<a class="'+gallery.link_class+'" href="'+secureUrl(album.WebUri)+'"><h4 class="'+gallery.title_class+'">'+album.Name+'</h4></a>' : 
-                  '';
-                var albumHtml  = '<div class="'+gallery.album_container_class+'">'+album_title_html;
-                albumHtml += data;
-                albumHtml += '</div>';
-                $('#'+gallery.el).append(albumHtml);
+                generateAlbumHtml(gallery, album, images);
 
                 // add the albums to the cache
                 var arr = JSON.parse(localStorage.getItem('smugCacheAlbums')) || [];
@@ -284,32 +293,42 @@ jQuery(function ($) {
       var promises = [];
       $.each(images, function(i, image) {
         if (i < gallery.image_count){
-          promises.push(
-            retrieveApi(image.Uris.ImageSizes.Uri).success(function (data) {
-              if (data.Code === 200) {
-                var MediumUrl = data.Response.ImageSizes.MediumImageUrl;
-                var LargeUrl = data.Response.ImageSizes.LargeImageUrl;
-                array.push({
-                  Caption: image.Caption, 
-                  MediumImageUrl: MediumUrl, 
-                  LargeImageUrl: LargeUrl,
-                  ThumbnailUrl: image.ThumbnailUrl,
-                  WebUri: image.WebUri
-                });
+          if ( gallery.display_in_lightgallery === '1' ) {
+            promises.push(
+              retrieveApi(image.Uris.ImageSizes.Uri).success(function (data) {
+                if (data.Code === 200) {
+                  var MediumUrl = data.Response.ImageSizes.MediumImageUrl;
+                  var LargeUrl = data.Response.ImageSizes.LargeImageUrl;
+                  array.push({
+                    Caption: image.Caption, 
+                    MediumImageUrl: MediumUrl, 
+                    LargeImageUrl: LargeUrl,
+                    ThumbnailUrl: image.ThumbnailUrl,
+                    WebUri: image.WebUri
+                  });
 
-              } else {
-                reject();
-              }
-            })
-              .error(function (err){
-                console.log(err);
-                removeLoader(gallery.el);
-                renderError(JSON.parse(err.responseText).Code + ': '+JSON.parse(err.responseText).Message, gallery.el);
-                if (JSON.parse(err.responseText).Code === 404) {
-                  renderError('The gallery was removed or the ID is incorrect.', gallery.el);
+                } else {
+                  reject();
                 }
               })
-          );
+                .error(function (err){
+                  console.log(err);
+                  removeLoader(gallery.el);
+                  renderError(JSON.parse(err.responseText).Code + ': '+JSON.parse(err.responseText).Message, gallery.el);
+                  if (JSON.parse(err.responseText).Code === 404) {
+                    renderError('The gallery was removed or the ID is incorrect.', gallery.el);
+                  }
+                })
+            );
+          } else {
+            array.push({
+              Caption: image.Caption, 
+              MediumImageUrl: '', 
+              LargeImageUrl: '',
+              ThumbnailUrl: image.ThumbnailUrl,
+              WebUri: image.WebUri
+            });
+          }
         }
  
       });
@@ -327,13 +346,9 @@ jQuery(function ($) {
       if (data.Code === 200) {
         var album = data.Response.Album;
         retrieveImages(album.Uris.AlbumImages.Uri, album.AlbumKey, gallery)
-          .then(function (data){ 
-            var album_title_html = (gallery.show_album_title === '1') ? '<a class="'+gallery.link_class+'" href="'+secureUrl(album.WebUri)+'"><h4 class="'+gallery.title_class+'">'+album.Name+'</h4></a>' : '';
-            var albumHtml = '<div class="'+gallery.album_container_class+' '+(gallery.display_in_lightgallery === '1' ? 'lg-smug' : '')+'">'+album_title_html;
-            albumHtml += data;
-            albumHtml += '</div>';
+          .then(function (images){ 
 
-            $('#'+gallery.el).html(albumHtml);
+            generateAlbumHtml(gallery, album, images);
 
             if ( gallery.display_in_lightgallery === '1' ) {
 
